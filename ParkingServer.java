@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class ParkingServer {
 
-    private static final int PORT = 8080;
+    private static final int PORT = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
 
     // In-memory persistent database entities
     public static final List<Map<String, Object>> users = new CopyOnWriteArrayList<>();
