@@ -1,0 +1,430 @@
+/* SmartPark AI - Ultra Pure Black Midnight Theme */
+
+:root {
+    --bg-pure-black: #000000;
+    --bg-black-surface: #090a0f;
+    --bg-black-card: #0f111a;
+    --bg-black-input: #141722;
+
+    --color-cyan: #00f2fe;
+    --color-emerald: #00e676;
+    --color-gold: #ffd700;
+    --color-crimson: #ff3366;
+    --color-purple: #b388ff;
+
+    --border-dark: #1e2333;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    background-color: var(--bg-pure-black) !important;
+    color: #e2e8f0;
+    overflow-x: hidden;
+}
+
+/* Custom Color Utilities */
+.text-cyan { color: var(--color-cyan) !important; }
+.text-emerald { color: var(--color-emerald) !important; }
+.text-gold { color: var(--color-gold) !important; }
+.text-crimson { color: var(--color-crimson) !important; }
+.text-purple { color: var(--color-purple) !important; }
+
+.bg-cyan { background-color: var(--color-cyan) !important; }
+.bg-emerald { background-color: var(--color-emerald) !important; }
+.bg-gold { background-color: var(--color-gold) !important; }
+.bg-crimson { background-color: var(--color-crimson) !important; }
+.bg-purple { background-color: var(--color-purple) !important; }
+
+.bg-black-surface { background-color: var(--bg-black-surface) !important; }
+.bg-black-card { background-color: var(--bg-black-card) !important; }
+.bg-black-input { background-color: var(--bg-black-input) !important; color: #fff !important; }
+
+.border-dark-secondary { border-color: var(--border-dark) !important; }
+
+/* Glowing Neon Borders */
+.border-neon-cyan { border: 1px solid rgba(0, 242, 254, 0.4) !important; box-shadow: 0 0 15px rgba(0, 242, 254, 0.1); }
+.border-neon-emerald { border: 1px solid rgba(0, 230, 118, 0.4) !important; box-shadow: 0 0 15px rgba(0, 230, 118, 0.1); }
+.border-neon-gold { border: 1px solid rgba(255, 215, 0, 0.4) !important; box-shadow: 0 0 15px rgba(255, 215, 0, 0.1); }
+.border-neon-crimson { border: 1px solid rgba(255, 51, 102, 0.4) !important; box-shadow: 0 0 15px rgba(255, 51, 102, 0.1); }
+.border-neon-purple { border: 1px solid rgba(179, 136, 255, 0.4) !important; box-shadow: 0 0 15px rgba(179, 136, 255, 0.1); }
+
+/* Glowing Circle Backgrounds */
+.icon-circle {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.bg-cyan-glow { background: rgba(0, 242, 254, 0.12); }
+.bg-emerald-glow { background: rgba(0, 230, 118, 0.12); }
+.bg-gold-glow { background: rgba(255, 215, 0, 0.12); }
+.bg-crimson-glow { background: rgba(255, 51, 102, 0.12); }
+
+/* Buttons */
+.btn-cyan { background-color: var(--color-cyan); color: #000; font-weight: 700; border: none; }
+.btn-cyan:hover { background-color: #4facfe; color: #000; }
+.btn-outline-cyan { border-color: var(--color-cyan); color: var(--color-cyan); }
+.btn-outline-cyan:hover, .btn-outline-cyan.active { background-color: var(--color-cyan); color: #000; }
+
+.btn-emerald { background-color: var(--color-emerald); color: #000; font-weight: 700; border: none; }
+.btn-emerald:hover { background-color: #00c853; color: #000; }
+
+.btn-gold { background-color: var(--color-gold); color: #000; font-weight: 700; border: none; }
+.btn-gold:hover { background-color: #ffab00; color: #000; }
+
+/* Login Page Styling */
+.login-wrapper {
+    background: radial-gradient(circle at center, #101424 0%, #000000 100%);
+}
+.login-card {
+    border-radius: 16px;
+    backdrop-filter: blur(20px);
+}
+.border-dark-neon {
+    border: 1px solid rgba(0, 242, 254, 0.3) !important;
+    box-shadow: 0 0 30px rgba(0, 242, 254, 0.15);
+}
+.shadow-cyan { box-shadow: 0 4px 20px rgba(0, 242, 254, 0.3); }
+
+/* Sidebar */
+#sidebar-wrapper {
+    min-height: 100vh;
+    width: 260px;
+    transition: margin 0.25s ease-out;
+}
+#sidebar-wrapper .list-group-item {
+    border: none;
+    padding: 0.85rem 1.25rem;
+    font-weight: 500;
+    font-size: 0.95rem;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    transition: all 0.2s ease;
+}
+#sidebar-wrapper .list-group-item:hover {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    color: #fff !important;
+}
+#sidebar-wrapper .list-group-item.active {
+    background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%) !important;
+    color: #000 !important;
+    font-weight: 700;
+    box-shadow: 0 4px 15px rgba(0, 242, 254, 0.4);
+}
+
+/* Visual Parking Slot Grid Cards */
+.slot-card {
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    border: 2px solid transparent;
+}
+.slot-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
+}
+.slot-card.status-AVAILABLE {
+    background-color: rgba(0, 230, 118, 0.08);
+    border-color: var(--color-emerald);
+    color: var(--color-emerald);
+}
+.slot-card.status-OCCUPIED {
+    background-color: rgba(255, 51, 102, 0.08);
+    border-color: var(--color-crimson);
+    color: var(--color-crimson);
+}
+.slot-card.status-RESERVED {
+    background-color: rgba(255, 215, 0, 0.08);
+    border-color: var(--color-gold);
+    color: var(--color-gold);
+}
+.slot-card.status-MAINTENANCE {
+    background-color: rgba(108, 117, 125, 0.08);
+    border-color: #6c757d;
+    color: #adb5bd;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #000;
+}
+::-webkit-scrollbar-thumb {
+    background: #1e2333;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-cyan);
+}
+
+/* Print Stylesheet */
+@media print {
+    body * { visibility: hidden; }
+    #ticketModal, #ticketModal *, #receiptModal, #receiptModal * { visibility: visible; }
+    #ticketModal, #receiptModal { position: absolute; left: 0; top: 0; width: 100%; }
+}
+
+
+/* ================================================================
+   DASHBOARD THEME OVERRIDE
+   Login page remains unchanged. Only the authenticated dashboard
+   switches from pure-black neon to a clean professional blue/slate UI.
+   ================================================================ */
+body.dashboard-mode {
+    background: #f4f7fb !important;
+    color: #1e293b;
+}
+
+body.dashboard-mode #wrapper {
+    --color-cyan: #2563eb;
+    --color-emerald: #16a34a;
+    --color-gold: #d97706;
+    --color-crimson: #dc2626;
+    --color-purple: #7c3aed;
+    --border-dark: #dbe3ef;
+    background: #f4f7fb;
+}
+
+body.dashboard-mode #sidebar-wrapper {
+    background: #0f172a !important;
+    border-color: #243247 !important;
+}
+
+body.dashboard-mode #sidebar-wrapper .brand-logo {
+    color: #f8fafc !important;
+    border-color: #243247 !important;
+}
+
+body.dashboard-mode #sidebar-wrapper .list-group-item {
+    color: #cbd5e1 !important;
+}
+
+body.dashboard-mode #sidebar-wrapper .list-group-item:hover {
+    background: rgba(255,255,255,.08) !important;
+    color: #fff !important;
+}
+
+body.dashboard-mode #sidebar-wrapper .list-group-item.active {
+    background: linear-gradient(135deg, #2563eb, #3b82f6) !important;
+    color: #fff !important;
+    box-shadow: 0 6px 18px rgba(37,99,235,.28);
+}
+
+body.dashboard-mode #page-content-wrapper {
+    background: #f4f7fb !important;
+}
+
+body.dashboard-mode #page-content-wrapper > .navbar {
+    background: #ffffff !important;
+    border-color: #dbe3ef !important;
+    color: #1e293b !important;
+}
+
+body.dashboard-mode #page-content-wrapper .text-light {
+    color: #1e293b !important;
+}
+
+body.dashboard-mode #page-content-wrapper .text-secondary {
+    color: #64748b !important;
+}
+
+body.dashboard-mode #page-content-wrapper .bg-black-card {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    border-color: #dbe3ef !important;
+    box-shadow: 0 8px 24px rgba(15,23,42,.07);
+}
+
+body.dashboard-mode #page-content-wrapper .bg-black-input {
+    background: #f8fafc !important;
+    color: #1e293b !important;
+    border-color: #cbd5e1 !important;
+}
+
+body.dashboard-mode #page-content-wrapper .border-dark-secondary {
+    border-color: #dbe3ef !important;
+}
+
+body.dashboard-mode #page-content-wrapper .table-dark {
+    --bs-table-bg: #ffffff;
+    --bs-table-color: #1e293b;
+    --bs-table-border-color: #e2e8f0;
+}
+
+body.dashboard-mode #page-content-wrapper .dropdown-menu-dark {
+    background: #ffffff;
+    border-color: #dbe3ef;
+}
+
+body.dashboard-mode #page-content-wrapper .dropdown-menu-dark .dropdown-item {
+    color: #334155;
+}
+
+body.dashboard-mode #page-content-wrapper .dropdown-menu-dark .dropdown-item:hover {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+body.dashboard-mode .btn-outline-secondary {
+    color: #475569;
+    border-color: #cbd5e1;
+}
+
+body.dashboard-mode .btn-outline-secondary:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+body.dashboard-mode .border-neon-cyan,
+body.dashboard-mode .border-neon-emerald,
+body.dashboard-mode .border-neon-gold,
+body.dashboard-mode .border-neon-crimson,
+body.dashboard-mode .border-neon-purple {
+    box-shadow: 0 4px 18px rgba(15,23,42,.06);
+}
+
+body.dashboard-mode ::-webkit-scrollbar-track {
+    background: #e2e8f0;
+}
+
+body.dashboard-mode ::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+}
+
+body.dashboard-mode ::-webkit-scrollbar-thumb:hover {
+    background: #2563eb;
+}
+
+
+/* ================================================================
+   QUICK ROLE LOGIN + READABLE DASHBOARD TEXT
+   ================================================================ */
+.quick-login-section {
+    border-top: 1px solid rgba(148,163,184,.18);
+    border-bottom: 1px solid rgba(148,163,184,.18);
+    padding: 16px 0;
+}
+.quick-login-title {
+    color: #cbd5e1;
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+.role-login-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0,1fr));
+    gap: 8px;
+}
+.role-login-card {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    padding: 9px;
+    border: 1px solid #263044;
+    border-radius: 10px;
+    background: #121827;
+    color: #f8fafc;
+    text-align: left;
+    transition: .2s ease;
+}
+.role-login-card:hover {
+    transform: translateY(-1px);
+    border-color: #3b82f6;
+    background: #182238;
+    box-shadow: 0 6px 16px rgba(0,0,0,.22);
+}
+.role-login-card.selected {
+    border-color: #22d3ee;
+    background: linear-gradient(135deg, #172554, #0f172a);
+    box-shadow: 0 0 0 2px rgba(34,211,238,.18), 0 8px 20px rgba(0,0,0,.25);
+}
+.role-login-card.selected strong { color:#ffffff; }
+.role-login-card.selected small { color:#cbd5e1; }
+.role-login-card:last-child { grid-column: 1 / -1; }
+.role-login-card strong { display:block; color:#f8fafc; font-size:.82rem; line-height:1.1; }
+.role-login-card small { display:block; color:#94a3b8; font-size:.64rem; margin-top:2px; }
+.role-icon {
+    width: 34px; height: 34px; flex: 0 0 34px; border-radius: 9px;
+    display:flex; align-items:center; justify-content:center;
+    background:#1e293b; color:#60a5fa;
+}
+.role-icon.manager { color:#34d399; }
+.role-icon.staff { color:#fbbf24; }
+.role-icon.security { color:#fb7185; }
+.role-icon.customer { color:#a78bfa; }
+.quick-login-hint { color:#cbd5e1; font-size:.7rem; margin-top:10px; text-align:center; line-height:1.45; }
+.quick-login-hint strong { color:#67e8f9; }
+
+/* Ensure every dashboard surface has readable contrast. */
+body.dashboard-mode #page-content-wrapper .bg-black,
+body.dashboard-mode #page-content-wrapper .bg-black-surface {
+    background:#ffffff !important;
+    color:#1e293b !important;
+}
+body.dashboard-mode #page-content-wrapper .text-white,
+body.dashboard-mode #page-content-wrapper .text-light,
+body.dashboard-mode #page-content-wrapper .text-dark {
+    color:#1e293b !important;
+}
+body.dashboard-mode #page-content-wrapper .table,
+body.dashboard-mode #page-content-wrapper .table td,
+body.dashboard-mode #page-content-wrapper .table th {
+    color:#334155;
+}
+body.dashboard-mode #page-content-wrapper .form-control,
+body.dashboard-mode #page-content-wrapper .form-select {
+    color:#1e293b !important;
+    background-color:#f8fafc !important;
+}
+body.dashboard-mode #page-content-wrapper .form-control::placeholder { color:#64748b !important; opacity:1; }
+body.dashboard-mode #page-content-wrapper .btn-black-input {
+    background:#f8fafc !important; color:#1e293b !important; border-color:#cbd5e1 !important;
+}
+body.dashboard-mode #page-content-wrapper .badge.bg-black {
+    background:#eef2ff !important; color:#1d4ed8 !important;
+}
+body.dashboard-mode #page-content-wrapper .border-cyan { border-color:#2563eb !important; }
+
+@media (max-width: 420px) {
+    .role-login-grid { grid-template-columns: 1fr; }
+    .role-login-card:last-child { grid-column:auto; }
+}
+
+/* ================================================================
+   ROLE-LOCKED DASHBOARD UX
+   Each authenticated account sees only its own permitted workspace.
+   ================================================================ */
+.role-access-badge,
+.role-lock-badge {
+    background: rgba(37,99,235,.08);
+    color: #2563eb;
+    border-color: #dbe3ef !important;
+    font-weight: 700;
+}
+
+body.dashboard-mode .role-welcome-card {
+    border-color: #bfdbfe !important;
+    background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%) !important;
+}
+body.dashboard-mode .role-access-badge,
+body.dashboard-mode .role-lock-badge {
+    color: #1d4ed8 !important;
+    background: #eff6ff !important;
+}
+body.dashboard-mode #header-role-lock {
+    color: #1d4ed8 !important;
+}
+
+@media (max-width: 900px) {
+    .role-lock-badge { display: none !important; }
+}
