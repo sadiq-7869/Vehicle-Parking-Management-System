@@ -3,7 +3,7 @@
  * Pure Black Theme & Login Authentication Logic
  */
 
-const API_BASE = "http://localhost:8080/api";
+const API_BASE = "/api";
 
 let currentRole = "ADMIN";
 let currentUser = null;
