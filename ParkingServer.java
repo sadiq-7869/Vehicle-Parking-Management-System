@@ -3,9 +3,6 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
 import java.io.*;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -26,18 +23,6 @@ import java.util.concurrent.atomic.AtomicLong;
  * Complete Java Single-Folder Server using standard JDK com.sun.net.httpserver.HttpServer.
  */
 public class ParkingServer {
-        // MySQL Database Configuration
-    private static final String DB_URL =
-            "jdbc:mysql://localhost:3306/vehicle_parking_system?useSSL=false&serverTimezone=UTC";
-
-    private static final String DB_USER = "root";
-
-    private static final String DB_PASSWORD = "Mysql@456";
-
-    private static Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-    }
-
 
     private static final int PORT = 8080;
 
@@ -664,50 +649,25 @@ public class ParkingServer {
                     return;
                 }
                 Map<String, Object> foundUser = null;
-                for (Map<String, Object> u : users)try (Connection connection = getConnection();
-     java.sql.PreparedStatement ps = connection.prepareStatement(
-         "SELECT id, full_name, email, phone, password, role, status, created_at " +
-         "FROM users WHERE email = ?")) {
-
-    ps.setString(1, email);
-
-    try (java.sql.ResultSet rs = ps.executeQuery()) {
-        if (rs.next()) {
-
-            Map<String, Object> mysqlUser = new HashMap<>();
-
-            mysqlUser.put("id", rs.getLong("id"));
-            mysqlUser.put("full_name", rs.getString("full_name"));
-            mysqlUser.put("email", rs.getString("email"));
-            mysqlUser.put("phone", rs.getString("phone"));
-            mysqlUser.put("password", rs.getString("password"));
-            mysqlUser.put("role", rs.getString("role"));
-            mysqlUser.put("status", rs.getString("status"));
-            mysqlUser.put("created_at", rs.getString("created_at"));
-
-           String storedPassword = String.valueOf(mysqlUser.get("password"));
-
-            if (hashPassword(password).equals(storedPassword)
-                    && role.equalsIgnoreCase(String.valueOf(mysqlUser.get("role")))
-                    && "ACTIVE".equalsIgnoreCase(String.valueOf(mysqlUser.get("status")))) {
-
-                foundUser = mysqlUser;
-            }
-        }
-    }
-
-} catch (SQLException ex) {
-
-    ex.printStackTrace();
-
-    sendJsonResponse(exchange, 500,
-            Map.of(
-                "success", false,
-                "message", "MySQL login failed."
-            ));
-
-    return;
-}
+                for (Map<String, Object> u : users) {
+                    if (!email.equalsIgnoreCase(String.valueOf(u.get("email"))) ||
+                            !role.equalsIgnoreCase(String.valueOf(u.get("role"))) ||
+                            !"ACTIVE".equalsIgnoreCase(String.valueOf(u.get("status")))) {
+                        continue;
+                    }
+                    String storedPassword = String.valueOf(u.get("password"));
+                    boolean passwordMatches = hashPassword(password).equals(storedPassword);
+                    // Support accounts created by older versions that stored the password
+                    // before hashing was enabled, and upgrade them after a successful login.
+                    if (!passwordMatches && password.equals(storedPassword)) {
+                        u.put("password", hashPassword(password));
+                        try { saveUsers(); } catch (IOException ignored) { }
+                        passwordMatches = true;
+                    }
+                    if (passwordMatches) {
+                        foundUser = u; break;
+                    }
+                }
                 if (foundUser == null) {
                     sendJsonResponse(exchange, 401, Map.of("success", false, "message", "No registered account matches this role, email and password."));
                     return;
@@ -761,45 +721,11 @@ public class ParkingServer {
                 user.put("phone", phone);
                 user.put("role", role);
                 // Store only a hash of the registered password.
-                String hashedPassword = hashPassword(password);
-
-try (Connection connection = getConnection();
-     java.sql.PreparedStatement ps = connection.prepareStatement(
-         "INSERT INTO users (full_name, email, phone, password, role, status) VALUES (?, ?, ?, ?, ?, ?)",
-         java.sql.Statement.RETURN_GENERATED_KEYS)) {
-
-    ps.setString(1, name);
-    ps.setString(2, email);
-    ps.setString(3, phone);
-    ps.setString(4, hashedPassword);
-    ps.setString(5, role);
-    ps.setString(6, "ACTIVE");
-
-    ps.executeUpdate();
-
-    try (java.sql.ResultSet rs = ps.getGeneratedKeys()) {
-        if (rs.next()) {
-            user.put("id", rs.getLong(1));
-        }
-    }
-
-} catch (SQLException ex) {
-    ex.printStackTrace();
-    sendJsonResponse(exchange, 500,
-            Map.of("success", false, "message", "Could not save user to MySQL."));
-    return;
-}
-
-user.put("full_name", name);
-user.put("email", email);
-user.put("phone", phone);
-user.put("role", role);
-user.put("password", hashedPassword);
-user.put("status", "ACTIVE");
-user.put("created_at", LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
-
-users.add(user);
-saveUsers();
+                user.put("password", hashPassword(password));
+                user.put("status", "ACTIVE");
+                user.put("created_at", LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
+                users.add(user);
+                saveUsers();
                 Map<String,Object> safe = new HashMap<>(user); safe.remove("password");
                 logAudit(getObjLong(user.get("id")), "USER_CREATED", "USER", getObjLong(user.get("id")), "New user registered: " + email);
                 sendJsonResponse(exchange, 201, Map.of("success", true, "message", "Registration successful. Use your registered email and password to login.", "data", safe));
@@ -809,301 +735,58 @@ saveUsers();
         }
     }
 
-   static class VehicleHandler implements HttpHandler {
-    @Override
-    public void handle(HttpExchange exchange) throws IOException {
+    static class VehicleHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
+                sendOptionsResponse(exchange);
+                return;
+            }
+            String method = exchange.getRequestMethod();
+            String path = exchange.getRequestURI().getPath();
 
-        if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
-            sendOptionsResponse(exchange);
-            return;
-        }
-
-        String method = exchange.getRequestMethod();
-        String path = exchange.getRequestURI().getPath();
-
-        // GET - Load vehicles from MySQL
-        if ("GET".equalsIgnoreCase(method)) {
-
-            List<Map<String, Object>> result = new ArrayList<>();
-
-            try (Connection connection = getConnection();
-                 java.sql.PreparedStatement ps = connection.prepareStatement(
-                     "SELECT id, user_id, vehicle_number, vehicle_type, brand, model, " +
-                     "color, owner_name, owner_phone, owner_email, vehicle_status, created_at " +
-                     "FROM vehicles ORDER BY id DESC")) {
-
-                try (java.sql.ResultSet rs = ps.executeQuery()) {
-
-                    while (rs.next()) {
-
-                        Map<String, Object> vehicle = new HashMap<>();
-
-                        vehicle.put("id", rs.getLong("id"));
-                        vehicle.put("user_id", rs.getObject("user_id"));
-                        vehicle.put("vehicle_number", rs.getString("vehicle_number"));
-                        vehicle.put("vehicle_type", rs.getString("vehicle_type"));
-                        vehicle.put("brand", rs.getString("brand"));
-                        vehicle.put("model", rs.getString("model"));
-                        vehicle.put("color", rs.getString("color"));
-                        vehicle.put("owner_name", rs.getString("owner_name"));
-                        vehicle.put("owner_phone", rs.getString("owner_phone"));
-                        vehicle.put("owner_email", rs.getString("owner_email"));
-                        vehicle.put("vehicle_status", rs.getString("vehicle_status"));
-                        vehicle.put("created_at", rs.getString("created_at"));
-
-                        result.add(vehicle);
+            if ("GET".equalsIgnoreCase(method)) {
+                if (path.contains("/search")) {
+                    String query = exchange.getRequestURI().getQuery();
+                    String num = "";
+                    if (query != null && query.contains("number=")) {
+                        num = query.split("number=")[1].split("&")[0];
+                        num = URLDecoder.decode(num, StandardCharsets.UTF_8).trim().toUpperCase();
                     }
-                }
-
-            } catch (SQLException ex) {
-
-                ex.printStackTrace();
-
-                sendJsonResponse(exchange, 500,
-                        Map.of(
-                            "success", false,
-                            "message", "Could not load vehicles from MySQL."
-                        ));
-                return;
-            }
-
-            // Vehicle search
-            if (path.contains("/search")) {
-
-                String query = exchange.getRequestURI().getQuery();
-                String num = "";
-
-                if (query != null && query.contains("number=")) {
-                    num = query.split("number=")[1].split("&")[0];
-
-                    num = URLDecoder.decode(
-                            num,
-                            StandardCharsets.UTF_8
-                    ).trim().toUpperCase();
-                }
-
-                List<Map<String, Object>> searchResult = new ArrayList<>();
-
-                for (Map<String, Object> vehicle : result) {
-
-                    String vehicleNumber =
-                            String.valueOf(vehicle.get("vehicle_number"))
-                            .toUpperCase();
-
-                    if (vehicleNumber.contains(num)) {
-                        searchResult.add(vehicle);
-                    }
-                }
-
-                sendJsonResponse(
-                        exchange,
-                        200,
-                        Map.of(
-                            "success", true,
-                            "data", searchResult
-                        )
-                );
-
-                return;
-            }
-
-            sendJsonResponse(
-                    exchange,
-                    200,
-                    Map.of(
-                        "success", true,
-                        "data", result
-                    )
-            );
-
-        // POST - Register vehicle in MySQL
-        } else if ("POST".equalsIgnoreCase(method)) {
-
-            String body = readRequestBody(exchange);
-            Map<String, Object> req = parseJson(body);
-
-            String num = req.get("vehicle_number") == null
-                    ? ""
-                    : String.valueOf(req.get("vehicle_number"))
-                        .trim()
-                        .toUpperCase();
-
-            String vehicleType = req.get("vehicle_type") == null
-                    ? "CAR"
-                    : String.valueOf(req.get("vehicle_type"))
-                        .trim()
-                        .toUpperCase();
-
-            String brand = req.get("brand") == null
-                    ? ""
-                    : String.valueOf(req.get("brand")).trim();
-
-            String model = req.get("model") == null
-                    ? ""
-                    : String.valueOf(req.get("model")).trim();
-
-            String color = req.get("color") == null
-                    ? ""
-                    : String.valueOf(req.get("color")).trim();
-
-            String ownerName = req.get("owner_name") == null
-                    ? ""
-                    : String.valueOf(req.get("owner_name")).trim();
-
-            String ownerPhone = req.get("owner_phone") == null
-                    ? ""
-                    : String.valueOf(req.get("owner_phone")).trim();
-
-            String ownerEmail = req.get("owner_email") == null
-                    ? ""
-                    : String.valueOf(req.get("owner_email")).trim();
-
-            if (num.isEmpty()) {
-                sendJsonResponse(
-                        exchange,
-                        400,
-                        Map.of(
-                            "success", false,
-                            "message", "Vehicle number is required."
-                        )
-                );
-                return;
-            }
-
-            try (Connection connection = getConnection()) {
-
-                // Check duplicate vehicle number
-                try (java.sql.PreparedStatement check =
-                        connection.prepareStatement(
-                            "SELECT id FROM vehicles " +
-                            "WHERE UPPER(vehicle_number) = ?")) {
-
-                    check.setString(1, num);
-
-                    try (java.sql.ResultSet rs = check.executeQuery()) {
-
-                        if (rs.next()) {
-
-                            sendJsonResponse(
-                                    exchange,
-                                    400,
-                                    Map.of(
-                                        "success", false,
-                                        "message",
-                                        "Vehicle number already registered"
-                                    )
-                            );
-
-                            return;
+                    List<Map<String, Object>> result = new ArrayList<>();
+                    for (Map<String, Object> v : vehicles) {
+                        String vNum = ((String) v.get("vehicle_number")).toUpperCase();
+                        if (vNum.contains(num)) {
+                            result.add(v);
                         }
                     }
+                    sendJsonResponse(exchange, 200, Map.of("success", true, "data", result));
+                    return;
                 }
+                sendJsonResponse(exchange, 200, Map.of("success", true, "data", vehicles));
+            } else if ("POST".equalsIgnoreCase(method)) {
+                String body = readRequestBody(exchange);
+                Map<String, Object> req = parseJson(body);
+                String num = ((String) req.get("vehicle_number")).toUpperCase();
 
-                long vehicleId;
-
-                // Insert vehicle into MySQL
-                try (java.sql.PreparedStatement ps =
-                        connection.prepareStatement(
-                            "INSERT INTO vehicles " +
-                            "(vehicle_number, vehicle_type, brand, model, color, " +
-                            "owner_name, owner_phone, owner_email, vehicle_status) " +
-                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                            java.sql.Statement.RETURN_GENERATED_KEYS)) {
-
-                    ps.setString(1, num);
-                    ps.setString(2, vehicleType);
-                    ps.setString(3, brand);
-                    ps.setString(4, model);
-                    ps.setString(5, color);
-                    ps.setString(6, ownerName);
-                    ps.setString(7, ownerPhone);
-                    ps.setString(8, ownerEmail);
-                    ps.setString(9, "REGISTERED");
-
-                    ps.executeUpdate();
-
-                    try (java.sql.ResultSet rs =
-                            ps.getGeneratedKeys()) {
-
-                        if (!rs.next()) {
-
-                            sendJsonResponse(
-                                    exchange,
-                                    500,
-                                    Map.of(
-                                        "success", false,
-                                        "message",
-                                        "Vehicle was not saved."
-                                    )
-                            );
-
-                            return;
-                        }
-
-                        vehicleId = rs.getLong(1);
+                for (Map<String, Object> v : vehicles) {
+                    if (num.equals(v.get("vehicle_number"))) {
+                        sendJsonResponse(exchange, 400, Map.of("success", false, "message", "Vehicle number already registered"));
+                        return;
                     }
                 }
+                req.put("id", vehSeq.incrementAndGet());
+                req.put("vehicle_number", num);
+                req.put("vehicle_status", "REGISTERED");
+                req.put("created_at", LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
+                vehicles.add(req);
 
-                Map<String, Object> vehicle = new HashMap<>();
-
-                vehicle.put("id", vehicleId);
-                vehicle.put("vehicle_number", num);
-                vehicle.put("vehicle_type", vehicleType);
-                vehicle.put("brand", brand);
-                vehicle.put("model", model);
-                vehicle.put("color", color);
-                vehicle.put("owner_name", ownerName);
-                vehicle.put("owner_phone", ownerPhone);
-                vehicle.put("owner_email", ownerEmail);
-                vehicle.put("vehicle_status", "REGISTERED");
-
-                logAudit(
-                        1,
-                        "VEHICLE_REGISTERED",
-                        "VEHICLE",
-                        vehicleId,
-                        "Vehicle registered: " + num
-                );
-
-                sendJsonResponse(
-                        exchange,
-                        201,
-                        Map.of(
-                            "success", true,
-                            "message",
-                            "Vehicle registered successfully",
-                            "data", vehicle
-                        )
-                );
-
-            } catch (SQLException ex) {
-
-                ex.printStackTrace();
-
-                sendJsonResponse(
-                        exchange,
-                        500,
-                        Map.of(
-                            "success", false,
-                            "message",
-                            "Could not save vehicle to MySQL."
-                        )
-                );
+                logAudit(1, "VEHICLE_REGISTERED", "VEHICLE", getObjLong(req.get("id")), "Vehicle registered: " + num);
+                sendJsonResponse(exchange, 201, Map.of("success", true, "message", "Vehicle registered successfully", "data", req));
             }
-
-        } else {
-
-            sendJsonResponse(
-                    exchange,
-                    405,
-                    Map.of(
-                        "success", false,
-                        "message", "Method not allowed"
-                    )
-            );
         }
     }
-}
+
     static class AreaHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
@@ -1115,27 +798,28 @@ saveUsers();
         }
     }
 
-   static class SlotHandler implements HttpHandler {
-    @Override
-    public void handle(HttpExchange exchange) throws IOException {
-        if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
-            sendOptionsResponse(exchange);
-            return;
-        }
-        String path = exchange.getRequestURI().getPath();
-        if (path.contains("/available")) {
-            List<Map<String, Object>> avail = new ArrayList<>();
-            for (Map<String, Object> s : parkingSlots) {
-                if ("AVAILABLE".equalsIgnoreCase((String) s.get("status"))) {
-                    avail.add(s);
-                }
+    static class SlotHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
+                sendOptionsResponse(exchange);
+                return;
             }
-            sendJsonResponse(exchange, 200, Map.of("success", true, "data", avail));
-        } else {
-            sendJsonResponse(exchange, 200, Map.of("success", true, "data", parkingSlots));
+            String path = exchange.getRequestURI().getPath();
+            if (path.contains("/available")) {
+                List<Map<String, Object>> avail = new ArrayList<>();
+                for (Map<String, Object> s : parkingSlots) {
+                    if ("AVAILABLE".equalsIgnoreCase((String) s.get("status"))) {
+                        avail.add(s);
+                    }
+                }
+                sendJsonResponse(exchange, 200, Map.of("success", true, "data", avail));
+            } else {
+                sendJsonResponse(exchange, 200, Map.of("success", true, "data", parkingSlots));
+            }
         }
     }
-}
+
     static class EntryHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
